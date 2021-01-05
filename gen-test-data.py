@@ -341,6 +341,7 @@ def generate_student(name, courses, total_weights):
 
     print(student.name)
     print("- Year: " + student.year)
+    print("- On campus? " + student.on_campus)
     print("- Timezone: " + student.time_zone)
     print("- Meeting freq: " + student.meeting_freq)
     print("- Meeting time: " + student.meeting_time)
