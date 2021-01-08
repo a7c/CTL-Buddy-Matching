@@ -252,25 +252,34 @@ def map_course_codes_to_depts(course):
     return list(map(lambda code: code.dept, course.course_codes))
 
 # warning: mutates `courses`
-def select_specialization(courses, selected_courses, year, total_weights):
-    specialization = random.choices(map_course_codes_to_depts(selected_courses[0]))[0]
-    # if we chose a specialization, re-weight the courses to make it
-    # much more likely that we choose courses in our dept
-    if (specialization != None):
-        total_weight_of_preferred_courses = 0
-        for course in courses:
-            if specialization in map_course_codes_to_depts(course):
-                total_weight_of_preferred_courses += course.weights[year]
+def maybe_select_specialization(courses, selected_courses, year, total_weights):
+    # freshmen and sophomores might have a major, juniors and seniors almost definitely do
+    if (
+        year == FRESHMAN and random.randrange(0, 3) == 0
+        or year == SOPHOMORE and random.randrange(0, 2) == 0
+        or year == JUNIOR
+        or year == SENIOR
+    ):
+        specialization = random.choices(map_course_codes_to_depts(selected_courses[0]))[0]
+        # if we chose a specialization, re-weight the courses to make it
+        # much more likely that we choose courses in our dept
+        if (specialization != None):
+            total_weight_of_preferred_courses = 0
+            for course in courses:
+                if specialization in map_course_codes_to_depts(course):
+                    total_weight_of_preferred_courses += course.weights[year]
 
-        # balance weights so that there's ~50% chance of choosing from
-        # our dept
-        weight_diff = total_weights[year] - total_weight_of_preferred_courses
-        for course in courses:
-            if specialization not in map_course_codes_to_depts(course):
-                course.weights[year] = course.weights[year] / weight_diff * total_weight_of_preferred_courses
-    if specialization not in FORBIDDEN_SPECIALIZATIONS:
-        return specialization
-    else:
+            # balance weights so that there's ~50% chance of choosing from
+            # our dept
+            weight_diff = total_weights[year] - total_weight_of_preferred_courses
+            for course in courses:
+                if specialization not in map_course_codes_to_depts(course):
+                    course.weights[year] = course.weights[year] / weight_diff * total_weight_of_preferred_courses
+        if specialization not in FORBIDDEN_SPECIALIZATIONS:
+            return specialization
+        else:
+            return None
+    else:  
         return None
 
 def generate_student(name, courses, total_weights):
@@ -301,23 +310,22 @@ def generate_student(name, courses, total_weights):
 
     # select a second course
     if (random.randrange(0, 5) > 0):
-        if (random.randrange(0, 2) == 0):
-            specialization = select_specialization(courses, selected_courses, year, total_weights)
+        specialization = maybe_select_specialization(courses, selected_courses, year, total_weights)
         selected_courses.append(select_random_course_weighted(courses, year))
         # select a third course
         if (random.randrange(0, 5) > 1):
-            if (specialization == None and random.randrange(0, 2) == 0):
-                specialization = select_specialization(courses, selected_courses, year, total_weights)
+            if (specialization == None):
+                specialization = maybe_select_specialization(courses, selected_courses, year, total_weights)
             selected_courses.append(select_random_course_weighted(courses, year))
             # select a fourth course
             if (random.randrange(0, 5) > 2):
-                if (specialization == None and random.randrange(0, 2) == 0):
-                    specialization = select_specialization(courses, selected_courses, year, total_weights)
+                if (specialization == None):
+                    specialization = maybe_select_specialization(courses, selected_courses, year, total_weights)
                 selected_courses.append(select_random_course_weighted(courses, year))
                 # select a fourth course
                 if (random.randrange(0, 5) > 3):
-                    if (specialization == None and random.randrange(0, 2 == 0)):
-                        specialization = select_specialization(courses, selected_courses, year, total_weights)
+                    if (specialization == None):
+                        specialization = maybe_select_specialization(courses, selected_courses, year, total_weights)
                     selected_courses.append(select_random_course_weighted(courses, year))
 
     # de-dupe

@@ -1,7 +1,7 @@
 ﻿dept,number,dept 2,number 2,dept 3,number 3,dept 4,number 4,dept 5,number 5,course name,credits,evals,freshman,sophomore,junior,senior,year 5,masters,other,phd
 EARTH,2,,,,,,,,,Climate and Society,3,99,,,,,,,,
 EARTHSYS,100A,GEOLSCI,6,,,,,,,Data Science for Geoscience,3,0,,,,,,,,
-ENERGY,100,EARTHSYS,101,,,,,,,Energy and the Environment,3,46,39,18,13,19,0,11,0,0
+ENERGY,101,EARTHSYS,101,,,,,,,Energy and the Environment,3,46,39,18,13,19,0,11,0,0
 BIO,105A,EARTHSYS,105A,,,,,,,Ecology and Natural History of Jasper Ridge Biological Preserve,4,45,26,35,24,10,0,0,0,5
 EARTHSYS,106B,EARTHSYS,206B,GEOPHYS,106,GEOPHYS,206,,,Sustainable and Equitable Water Management,4,0,,,,,,,,
 ESS,111,BIO,117,EARTHSYS,111,EARTHSYS,217,,,Biology and Global Change,4,104,2,20,41,29,1,4,3,0
@@ -113,6 +113,7 @@ AFRICAAM,112B,ENGLISH,112B,,,,,,,African Literature: From Chinua Achebe to Afrof
 AFRICAAM,132,CSRE,122S,HUMBIO,122S,,,,,"Social Class, Race, Ethnicity, and Health",4,46,7,7,35,47,2,2,0,0
 AFRICAAM,150B,AMSTUD,150B,CSRE,150S,HISTORY,150B,,,Nineteenth Century America,5,95,22,33,23,20,2,0,0,0
 AFRICAAM,179A,CSRE,179A,SOC,179A,SOC,279A,,,Crime and Punishment in America,5,0,,,,,,,,
+AFRICAAM,190,CSRE,189,SOC,189,SOC,289,,,Race and Immigration,5,0,,,,,,,,
 AMSTUD,1B,COMM,1B,,,,,,,"Media, Culture, and Society",5,77,38,48,7,7,0,0,0,0
 AMSTUD,155,HISTORY,155,,,,,,,The White Supremacist Constitution: American Constitutional History,5,29,,,,,,,,
 ANTHRO,3,ARCHLGY,1,,,,,,,Introduction to Archaeology,5,67,30,29,23,17,0,1,0,0
