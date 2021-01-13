@@ -27,12 +27,12 @@ FORBIDDEN_SPECIALIZATIONS = [
 
 TIME_ZONES = list(shared.time_zones.keys())
 # just guessing how likely it is that students will be in certain time zones
-TIME_ZONE_WEIGHTS_IF_OFF_CAMPUS = [
+TIME_ZONE_WEIGHTS = [
     0,
     0,
     1,
     2,
-    20,
+    30,
     5,
     10,
     20,
@@ -331,15 +331,11 @@ def generate_student(name, courses, total_weights):
     # de-dupe
     selected_courses = list(set(list(selected_courses)))
 
-    on_campus = random.choice(["Yes", "No"])
-    time_zone = 'UTC-08:00 Pacific Time'
-    if on_campus == "No":
-        time_zone = random.choices(TIME_ZONES, TIME_ZONE_WEIGHTS_IF_OFF_CAMPUS)[0]
+    time_zone = random.choices(TIME_ZONES, TIME_ZONE_WEIGHTS)[0]
 
     student = shared.Student(
         name,
         year_to_string[year],
-        on_campus,
         time_zone,
         random.choice(list(shared.meeting_frequency.keys())),
         random.choice(list(shared.meeting_times.keys())),
@@ -349,7 +345,6 @@ def generate_student(name, courses, total_weights):
 
     print(student.name)
     print("- Year: " + student.year)
-    print("- On campus? " + student.on_campus)
     print("- Timezone: " + student.time_zone)
     print("- Meeting freq: " + student.meeting_freq)
     print("- Meeting time: " + student.meeting_time)

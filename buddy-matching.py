@@ -5,14 +5,13 @@ from enum import Enum
 
 
 class Student:
-	def __init__(self, email, name, year, on_campus, time_zone, meeting_freq, meeting_time, classes, major):
+	def __init__(self, email, name, year, time_zone, meeting_freq, meeting_times, classes, major):
 		self.email = email 
 		self.name = name
 		self.year = year
-		self.on_campus = on_campus
 		self.time_zone = time_zone
 		self.meeting_freq = meeting_freq
-		self.meeting_time = meeting_time
+		self.meeting_times = meeting_times
 		self.classes = classes
 		self.major = major 
 
@@ -55,7 +54,7 @@ meeting_frequency = {
 	'Monthly': 3,
 }
 
-meeting_times = {
+meeting_time_dict = {
 	'Morning 08:00-12:00': 10, 
 	'Afternoon 12:00-16:00': 14,
 	'Evening 16:00- 20:00': 18,
@@ -64,8 +63,8 @@ meeting_times = {
 
 
 major_types = {
-	'Undeclared': 0,
-	'Aeronautics and Astronautics' : 1,
+	'Undeclared/Undecided': 0,
+	'Aeronautics and Astronautics': 1,
 	'African and African American Studies': 3, 
 	'African Studies': 3, 
 	'American Studies': 3, 
@@ -77,15 +76,15 @@ major_types = {
 	'Art Practice': 4, 
 	'Asian American Studies': 3, 
 	'Atmosphere/Energy': 1, 
-	'Bioengineering' : 1,
+	'Bioengineering': 1,
 	'Biology': 2,
-	'Biomechanical Engineering' : 1,
+	'Biomechanical Engineering': 1,
 	'Biomedical Computation': 2, 
-	'Chemical Engineering' :1 ,
+	'Chemical Engineering': 1,
 	'Chemistry': 2, 
 	'Chicana/o - Latina/o Studies': 3, 
 	'China Studies': 3, 
-	'Civil and Environmental Engineering' : 1,
+	'Civil and Environmental Engineering': 1,
 	'Classics': 4, 
 	'Communication': 4, 
 	'Community Health and Prevention Research': 2, 
@@ -97,19 +96,19 @@ major_types = {
 	'Economics': 3, 
 	'Education': 3, 
 	'Electrical Engineering' : 1,
-	'Energy Resources Engineering' :1,
+	'Energy Resources Engineering': 1,
 	'Engineering Physics' : 1, 
 	'English': 4, 
-	'Environmental Systems Engineering' :1,
+	'Environmental Systems Engineering': 1,
 	'Ethics in Society': 3, 
-	'Feminist, Gender, and Sexuality Studies'
+	'Feminist, Gender, and Sexuality Studies': 3,
 	'Film and Media Studies': 4, 
 	'French': 4, 
 	'Geological Studies': 2, 
 	'Geophysics': 2, 
-	'German Studies'
+	'German Studies': 3,
 	'History': 3, 
-	'Honors in the Arts'
+	'Honors in the Arts': 4,
 	'Human Biology': 2, 
 	'Iberian and Latin American Cultures': 3, 
 	'International Policy Studies': 3, 
@@ -127,12 +126,12 @@ major_types = {
 	'Mathematical and Computational Science': 1,
 	'Mathematics': 2, 
 	'Mechanical Engineering': 1,
-	'Modern Thought and Literature'
+	'Modern Thought and Literature': 4,
 	'Music': 4, 
 	'Music, Science, and Technology': 2, 
 	'Native American Studies': 3, 
 	'Philosophy': 4, 
-	'Philosophy and Religious Studies'
+	'Philosophy and Religious Studies': 4,
 	'Physics': 2, 
 	'Political Science': 3, 
 	'Product Design': 1,
@@ -156,15 +155,22 @@ def compute_similarity_score(student1, student2):
 	score = 0
 	num_classes_same = [value for value in student1.classes if value in student2.classes] 
 	score = 0.25 *len(num_classes_same)
-	meeting_time1 = (student1.time_zone + student1.meeting_time)%24
-	meeting_time2 = (student2.time_zone + student2.meeting_time)%24
-	if abs(meeting_time1-meeting_time2) < 4:
-		score = score
-	else:
-		score = abs(meeting_time1-meeting_time2) *0.1
+	meeting_times1 = list(map(lambda mt: (student1.time_zone + mt) % 24, student1.meeting_times))
+	meeting_times2 = list(map(lambda mt: (student2.time_zone + mt) % 24, student2.meeting_times))
+
+	## simple pairwise comparison of both students' meeting times to see how close they can get
+	meeting_time_diff_penalty = 3 # set to a "large" default value
+	for time1 in meeting_times1:
+		if meeting_time_diff_penalty == 0:
+			break
+		for time2 in meeting_times2:
+			if abs(time1 - time2) < 4:
+				meeting_time_diff_penalty = 0
+				break
+			else:
+				meeting_time_diff_penalty = min(meeting_time_diff_penalty, abs(time1 - time2) * 0.1)
+	score = score - meeting_time_diff_penalty
 	score = score - (student1.meeting_freq -student2.meeting_freq)*.1
-	if student1.on_campus and student2.on_campus:
-		score = score + 0.1 
 	diff_in_maj = abs(major_types[student1.major] - major_types[student2.major])
 	score += (0.4- diff_in_maj*0.1)
 	return score
@@ -241,7 +247,7 @@ def random_change(matches,scores):
 
 def main():
 	## import data 
-	student_data = pd.read_csv('Accountability Buddy Matching Survey .csv')
+	student_data = pd.read_csv('Accountability Buddy Matching Survey_January 12, 2021_21.06 - edited.csv')
 	students =  list()
 	student_data.rename(columns=lambda x: x.strip(),inplace=True)
 	## Create list of students to compute compatability scores for each of the students
@@ -249,36 +255,19 @@ def main():
 		name = student['Full Name'].strip()
 		year = student['Year'].strip()
 		email =  student['Email Address'].strip()
-		on_campus = student['Will you be on-campus during the Spring term?'].strip()
-		time_zone = student['Time Zone (Time Zone that you will be located in during the Spring term)'].strip()
+		time_zone = student['Time Zone (time zone where you will be located during Winter quarter)'].strip()
 		time_zone = time_zones[time_zone]
 		meeting_freq = student['How often do you wish to meet?'].strip()
 		meeting_freq = meeting_frequency[meeting_freq]
-		meeting_time = student['Preferred Meeting Time'].strip()
-		meeting_time = meeting_times[meeting_time]
-		if on_campus == 'Yes':
-			on_campus = True
-		else:
-			on_campus = False 
-		classes = set()
-		class1 = student['Accountability Courses: Please list courses for which you would want an accountability partner (Course 1)'].strip() 
-		classes.add(class1.strip())
-		class2 = student['Accountability Courses: Please list courses for which you would want an accountability partner (Course 2)']
-		if isinstance(class2, str) and  len(str(class2)) > 4 :
-			classes.add(class2.strip())
-		class3 = student['Accountability Courses: Please list courses for which you would want an accountability partner (Course 3)']
-		if isinstance(class3, str) and  len(str(class3)) > 4 :
-			classes.add(class3)
-		class4 = student['Accountability Courses: Please list courses for which you would want an accountability partner (Course 4)']
-		if isinstance(class4, str) and  len(str(class4)) > 4 :
-			classes.add(class4)
-		major = student['What is your Major?'].strip()
-		classes = list(set({class1,class2,class3,class4}))
+		meeting_times = student['Preferred Meeting Time(s)'].strip().split(',')
+		meeting_times = list(map(lambda mt: meeting_time_dict[mt], meeting_times))
+		classes = student['Please select (up to four) courses for which you would want an accountability partner.'].strip().split(',')
+		classes = list(set(classes)) # de-dupe
+		major = student['Major'].strip()
 		newStudent = Student(name = name, year =year, email = email,
-			on_campus = on_campus,
 			time_zone = time_zone,
 			meeting_freq = meeting_freq,
-			meeting_time = meeting_time,
+			meeting_times = meeting_times,
 			classes = classes,
 			major = major)
 
