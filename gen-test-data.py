@@ -1,3 +1,4 @@
+import csv
 import math
 import pandas
 import random
@@ -449,6 +450,37 @@ def main():
     for i in range(num_students_to_generate):
         students.append(generate_student('Student' + str(i), courses, total_weights))
 
+    # output to csv
+    filename = 'test-students.csv'
+    fields = [
+        shared.q_full_name,
+        shared.q_year,
+        shared.q_email_address,
+        shared.q_time_zone,
+        shared.q_meeting_freq,
+        shared.q_meeting_times,
+        shared.q_classes,
+        shared.q_major,
+    ]
+    rows = list(map(
+        lambda s: [
+            s.name,
+            s.year,
+            s.email,
+            s.time_zone,
+            s.meeting_freq,
+            ','.join(s.meeting_times),
+            ','.join(s.classes),
+            s.major
+        ],
+        students
+    ))
+
+    with open(filename, 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(fields)
+        writer.writerows(rows)
+    print('Test student CSV file has been written to ' + filename)
 
 if __name__ == '__main__':
     main()
