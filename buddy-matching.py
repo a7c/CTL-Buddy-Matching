@@ -3,6 +3,8 @@ import csv
 import random 
 from enum import Enum
 
+import shared
+
 compatability_scores = dict()
 
 def compute_similarity_score(student1, student2):
@@ -106,18 +108,18 @@ def main():
 	student_data.rename(columns=lambda x: x.strip(),inplace=True)
 	## Create list of students to compute compatability scores for each of the students
 	for index, student in student_data.iterrows():
-		name = student['Full Name'].strip()
-		year = student['Year'].strip()
-		email =  student['Email Address'].strip()
-		time_zone = student['Time Zone (time zone where you will be located during Winter quarter)'].strip()
+		name = student[shared.q_full_name].strip()
+		year = student[shared.q_year].strip()
+		email =  student[shared.q_email_address].strip()
+		time_zone = student[shared.q_time_zone].strip()
 		time_zone = shared.time_zones[time_zone]
-		meeting_freq = student['How often do you wish to meet?'].strip()
+		meeting_freq = student[shared.q_meeting_freq].strip()
 		meeting_freq = shared.meeting_frequency[meeting_freq]
-		meeting_times = student['Preferred Meeting Time(s)'].strip().split(',')
+		meeting_times = student[shared.q_meeting_times].strip().split(',')
 		meeting_times = list(map(lambda mt: shared.meeting_times[mt], meeting_times))
-		classes = student['Please select (up to four) courses for which you would want an accountability partner.'].strip().split(',')
+		classes = student[shared.q_classes].strip().split(',')
 		classes = list(set(classes)) # de-dupe
-		major = student['Major'].strip()
+		major = student[shared.q_major].strip()
 		newStudent = shared.Student(name = name, year =year, email = email,
 			time_zone = time_zone,
 			meeting_freq = meeting_freq,

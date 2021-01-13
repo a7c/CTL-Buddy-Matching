@@ -138,3 +138,13 @@ major_types = {
 	'Theater and Performance Studies': 4, 
 	'Urban Studies': 3
 }
+
+# strings for question prompts
+q_full_name = 'Full Name'
+q_year = 'Year'
+q_email_address = 'Email Address'
+q_time_zone = 'Time Zone (time zone where you will be located during Winter quarter)'
+q_meeting_freq = 'How often do you wish to meet?'
+q_meeting_times = 'Preferred Meeting Time(s)'
+q_classes = 'Please select (up to four) courses for which you would want an accountability partner.'
+q_major = 'Major'
