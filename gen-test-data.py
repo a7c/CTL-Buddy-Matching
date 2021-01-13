@@ -22,7 +22,7 @@ year_to_string = {
 EMPTY_WEIGHTS = [0, 0, 0, 0]
 
 FORBIDDEN_SPECIALIZATIONS = [
-    'ENGR'
+    'ENGR', 'LAWGEN', 'REES'
 ]
 
 TIME_ZONES = list(shared.time_zones.keys())
@@ -30,12 +30,12 @@ TIME_ZONES = list(shared.time_zones.keys())
 TIME_ZONE_WEIGHTS = [
     0,
     0,
-    1,
     2,
-    30,
-    5,
-    10,
+    4,
+    50,
+    15,
     20,
+    30,
     2,
     2,
     0,
@@ -56,6 +56,70 @@ TIME_ZONE_WEIGHTS = [
     0,
     0
 ]
+
+DEPT_TO_MAJOR = {
+    'AA': 'Aeronautics and Astronautics',
+    'AFRICAAM': 'African and African American Studies',
+    'AMSTUD': 'American Studies',
+    'ANTHRO': 'Anthropology',
+    'ARCHLGY': 'Archaeology',
+    'ARTHIST': 'Art History',
+    'BIO': 'Biology',
+    'BIOC': 'Biology', # biochem
+    'BIOE': 'Bioengineering',
+    'CEE': 'Civil and Environmental Engineering',
+    'CHEM': 'Chemistry',
+    'CHEMENG': 'Chemical Engineering',
+    'CHILATST': 'Chicana/o - Latina/o Studies',
+    'CHINA': 'East Asian Studies',
+    'CLASSICS': 'Classics',
+    'CME': 'Mathematical and Computational Science',
+    'COMM': 'Communication',
+    'COMPLIT': 'Comparative Literature',
+    'CS': 'Computer Science',
+    'CSRE': 'Comparative Studies and Race and Ethnicity',
+    'EARTH': 'Earth Systems',
+    'EASTASN': 'East Asian Studies',
+    'ECON': 'Economics',
+    'EDUC': 'Education',
+    'EE': 'Electrical Engineering',
+    'EMED': 'Human Biology', # default med to humbio
+    'ENERGY': 'Energy Resources Engineering',
+    'ENGLISH': 'English',
+    'ESS': 'Earth Systems',
+    'ETHICSOC': 'Ethics in Society',
+    'FEMGEN': 'Feminist, Gender, and Sexuality Studies',
+    'FILMPROD': 'Film and Media Studies',
+    'FRENCH': 'French',
+    'GEOLSCI': 'Geological Studies',
+    'GEOPHYS': 'Geophysics',
+    'HISTORY': 'History',
+    'HUMBIO': 'Human Biology',
+    'INTNLREL': 'International Relations',
+    'ITALIAN': 'Italian',
+    'JEWISHST': 'Jewish Studies',
+    'LINGUIST': 'Linguistics',
+    'MATH': 'Mathematics',
+    'MATSCI': 'Materials Science and Engineering',
+    'ME': 'Mechanical Engineering',
+    'MED': 'Human Biology', # default med to humbio
+    'MS&E': 'Management Science and Engineering',
+    'MUSIC': 'Music',
+    'NATIVEAM': 'Native American Studies',
+    'PEDS': 'Human Biology', # default med to humbio
+    'PHIL': 'Philosophy',
+    'PHYSICS': 'Physics',
+    'PSYCH': 'Psychology',
+    'POLISCI': 'Political Science',
+    'PUBLPOL': 'Public Policy',
+    'RELIGST': 'Religious Studies',
+    'SOC': 'Sociology',
+    'STATS': 'Statistics',
+    'STS': 'Science, Technology, and Society',
+    'SYMSYS': 'Symbolic Systems',
+    'TAPS': 'Theater and Performance Studies',
+    'URBANST': 'Urban Studies',
+}
 
 
 def take_digits(str):
@@ -332,22 +396,29 @@ def generate_student(name, courses, total_weights):
     selected_courses = list(set(list(selected_courses)))
 
     time_zone = random.choices(TIME_ZONES, TIME_ZONE_WEIGHTS)[0]
+    major = 'Undeclared/Undecided'
+    if specialization is not None:
+        major = DEPT_TO_MAJOR[str(specialization)]
 
     student = shared.Student(
+        name.lower() + '@stanford.edu',
         name,
         year_to_string[year],
         time_zone,
         random.choice(list(shared.meeting_frequency.keys())),
-        random.choice(list(shared.meeting_times.keys())),
+        random.sample(list(shared.meeting_times.keys()), k = random.randrange(1, 5)),
         list(map(lambda c: str(c.course_codes) + " " + str(c.name), selected_courses)),
-        str(specialization)
+        major
     )
 
     print(student.name)
+    print("- Email: " + student.email)
     print("- Year: " + student.year)
     print("- Timezone: " + student.time_zone)
     print("- Meeting freq: " + student.meeting_freq)
-    print("- Meeting time: " + student.meeting_time)
+    print("- Meeting times: ")
+    for time in student.meeting_times:
+        print("-- " + time)
     print("- Major: " + student.major)
     print("- Classes:")
     for course in student.classes:
@@ -376,7 +447,7 @@ def main():
 
     students = list()
     for i in range(num_students_to_generate):
-        students.append(generate_student('Student ' + str(i), courses, total_weights))
+        students.append(generate_student('Student' + str(i), courses, total_weights))
 
 
 if __name__ == '__main__':
