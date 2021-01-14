@@ -9,19 +9,21 @@ compatability_scores = dict()
 
 def compute_similarity_score(student1, student2):
 	score = 0
-	num_classes1 = len(student1.classes)
-	num_classes2 = len(student2.classes)
-	num_classes_check = min(num_classes1,num_classes2)
-	if num_classes_check == 1:
-		weight = 1
-	elif num_classes_check == 2:
-		weight = 0.5
-	elif num_classes_check == 3:
-		weight = 0.75
+	
+	if student1.major == student2.major:
+		score +=0.75
+		if student1.role == student2.role:
+			score+=0.25
 	else:
-		weight = 0.25
-	num_classes_same = [value for value in student1.classes if value in student2.classes] 
-	score = weight *len(num_classes_same)
+		if shared.grad_major_types[student1.major] == shared.grad_major_types[student2.major]:
+			score += 0.25
+			if shared.grad_majors_groups[student1.major] == shared.grad_majors_groups[student2.major]:
+				score += 0.25
+		if student1.role == student2.role:
+			score+=0.15
+
+	if student1.work_type == student2.work_type:
+		score+=0.15
 	meeting_times1 = list(map(lambda mt: (student1.time_zone + mt) % 24, student1.meeting_times))
 	meeting_times2 = list(map(lambda mt: (student2.time_zone + mt) % 24, student2.meeting_times))
 
@@ -38,8 +40,6 @@ def compute_similarity_score(student1, student2):
 				meeting_time_diff_penalty = min(meeting_time_diff_penalty, abs(time1 - time2) * 0.1)
 	score = score - meeting_time_diff_penalty
 	score = score - (student1.meeting_freq -student2.meeting_freq)*.1
-	diff_in_maj = abs(shared.major_types[student1.major] - shared.major_types[student2.major])
-	score += (0.4- diff_in_maj*0.1)
 	return score
 
 
@@ -124,7 +124,9 @@ def main():
 	email_to_student = dict()
 	for index, student in student_data.iterrows():
 		name = student[shared.q_full_name].strip()
-		year = student[shared.q_year].strip()
+		role = student[q_role].strip()
+		work_type = student[shared.q_role].strip()
+		work_type = shared.type_of_work[work_type]
 		email =  student[shared.q_email_address].strip()
 		time_zone = student[shared.q_time_zone].strip()
 		time_zone = shared.time_zones[time_zone]
@@ -132,14 +134,13 @@ def main():
 		meeting_freq = shared.meeting_frequency[meeting_freq]
 		meeting_times = student[shared.q_meeting_times].strip().split(',')
 		meeting_times = list(map(lambda mt: shared.meeting_times[mt], meeting_times))
-		classes = student[shared.q_classes].strip().split(',')
-		classes = list(set(classes)) # de-dupe
-		major = student[shared.q_major].strip()
-		newStudent = shared.Student(name = name, year =year, email = email,
+		major = student[shared.program].strip()
+		newStudent = shared.GradStudent(name = name, year =year, email = email,
+			role = role,
+			work_type = work_type,
 			time_zone = time_zone,
 			meeting_freq = meeting_freq,
 			meeting_times = meeting_times,
-			classes = classes,
 			major = major)
 		email_to_student[email] = newStudent
 	best_score = float('inf') 
@@ -175,7 +176,7 @@ def main():
 			best_score = current_score
 		print('Current best: ' + str(best_score))
 	
-	filename = "matches.csv"
+	filename = "graduate-matches.csv"
 	fields = ['Student 1', 'Student 2', 'Student 1 Email', 'Student 2 Email']
 
 	write_matches = []
@@ -191,10 +192,6 @@ def main():
 	        
 	    # writing the data rows  
 	    csvwriter.writerows(write_matches)
-
-
-
-
 
 if __name__ == "__main__":
     main()
