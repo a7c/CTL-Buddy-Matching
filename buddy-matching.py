@@ -39,7 +39,9 @@ def compute_similarity_score(student1, student2):
 	score = score - meeting_time_diff_penalty
 	score = score - (student1.meeting_freq -student2.meeting_freq)*.1
 	diff_in_maj = abs(shared.major_types[student1.major] - shared.major_types[student2.major])
+	diff_in_year = abs(student1.year - student2.year)
 	score += (0.4- diff_in_maj*0.1)
+	score += (0.4- diff_in_maj*0.05)
 	return score
 
 
@@ -125,6 +127,7 @@ def main():
 	for index, student in student_data.iterrows():
 		name = student[shared.q_full_name].strip()
 		year = student[shared.q_year].strip()
+		year = shared.year_type[year]
 		email =  student[shared.q_email_address].strip()
 		time_zone = student[shared.q_time_zone].strip()
 		time_zone = shared.time_zones[time_zone]

@@ -330,6 +330,15 @@ major_types = {
 	'Urban Studies': 3
 }
 
+year_type = {
+	'Frosh': 1,
+	'Sophomore': 2,
+	'Junior': 3,
+	'Senior': 4,
+	'5th year+':5,
+	'Co-term':6,
+}
+
 # strings for question prompts
 q_full_name = 'Full Name'
 q_year = 'Year'
