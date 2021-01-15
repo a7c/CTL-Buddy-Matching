@@ -78,6 +78,21 @@ def get_current_score(matches,scores):
 		overall_score +=score	
 	return overall_score
 
+def assign_last_student(matches,scores,last_student):
+	best_score = 0 
+	index = 0 
+	index_of_assign = 0
+	for match in matches:
+		score1 = compute_similarity_score(match[0], last_student)
+		score2 = compute_similarity_score(match[0], last_student)
+		avg_score = (score1 +score2)/2
+		if avg_score > best_score
+			index_of_assign = index
+			best_score = avg_score
+		index+=1 
+	return index_of_assign
+
+
 def random_assign(students):
 	all_students = []
 	for student in students:
@@ -88,7 +103,10 @@ def random_assign(students):
 		all_students.remove(match1)
 		all_students.remove(match2)
 		matches.append([match1,match2])
-	return matches 
+	if len(all_students) == 1:
+		last_student = all_students[0]
+		return matches, None
+	return matches, last_student
 
 def random_change(matches,scores):
 	m1, m2 = random.sample(set(range(len(matches))), 2)
@@ -156,7 +174,7 @@ def main():
 	num_students = len(students)
 	for i in range(num_rounds):
 		for j in range(len(students)):
-			matches = random_change(matches, compatability_scores)
+			matches, last_student = random_assign(students )
 		current_score = get_current_score(matches, compatability_scores)
 	print('Current overall_score: ' + str(current_score))
 
@@ -165,7 +183,7 @@ def main():
 	best_matches = matches
 	best_score = current_score
 	for i in range(num_initialize):
-		matches = random_assign(students )
+		matches, last_student = random_assign(students )
 		current_score = get_current_score(matches,compatability_scores)
 		num_rounds = 100 
 		num_students = len(students)
@@ -179,11 +197,15 @@ def main():
 		print('Current best: ' + str(best_score))
 	
 	filename = "matches.csv"
-	fields = ['Student 1', 'Student 2', 'Student 1 Email', 'Student 2 Email']
-
+	fields = ['Student 1', 'Student 2','Student 3', 'Student 1 Email', 'Student 2 Email','Student 3 Email']
+	index_of_assign = assign_last_student(matches,scores,last_student)
+	matches[index_of_assign].append(last_student)
 	write_matches = []
 	for match in matches:
-		write_matches.append([match[0].name,match[1].name,match[0].email,match[1].email])
+		if len(match) == 2:
+			write_matches.append([match[0].name,match[1].name,' ' ,match[0].email,match[1].email, ' '])
+		else:
+			write_matches.append([match[0].name,match[1].name,match[2].name ,match[0].email,match[1].email, match[2].email])
 
 	with open(filename, 'w') as csvfile:  
 	    # creating a csv writer object  
