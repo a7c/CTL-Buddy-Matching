@@ -243,7 +243,8 @@ type_of_work = {
 	'Computational (i.e. Computer programming)': 0,
 	'Experimental (i.e. Lab work)': 1,
 	'Reading/Writing (i.e Literary Analysis)':2,
-	'Other':3,
+	'Test Preparation':3,
+	'Other':4,
 
 }
 major_types = {
