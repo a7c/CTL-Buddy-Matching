@@ -11,7 +11,8 @@ def compute_similarity_score(student1, student2):
 	score = 0
 	
 	if student1.major == student2.major:
-		score +=0.75
+		if student1.outside_partner !='Yes' and student2.outside_partner != 'Yes':
+			score +=1.0
 		if student1.role == student2.role:
 			score+=0.25
 	else:
@@ -27,8 +28,30 @@ def compute_similarity_score(student1, student2):
 	meeting_times1 = list(map(lambda mt: (student1.time_zone + mt) % 24, student1.meeting_times))
 	meeting_times2 = list(map(lambda mt: (student2.time_zone + mt) % 24, student2.meeting_times))
 
+
+	if student1.meeting_type == student2.meeting_type and(student1.meeting_type ==1 or student1.meeting_type ==3) :
+		score = score+0.25
+	elif student1.meeting_type == 2 or student2.meeting_type == 2 :
+		score = score+0.15
+
+
+	if student1.partner_type == student2.partner_type:
+		score = score+0.25
+	elif student1.partner_type == 3 or student2.partner_type == 3 :
+		score = score+0.15
+
+	num_sim_work_types = 0
+	for work_type in student1.meeting_work_type:
+		if work_type in student2.meeting_work_type:
+			num_sim_work_types+=1
+
+	score = score+ .1*num_sim_work_types
+
+	score = score - abs(student1.meeting_freq -student2.meeting_freq)*.10
+
+
 	## simple pairwise comparison of both students' meeting times to see how close they can get
-	meeting_time_diff_penalty = 3 # set to a "large" default value
+	meeting_time_diff_penalty = 5 # set to a "large" default value
 	for time1 in meeting_times1:
 		if meeting_time_diff_penalty == 0:
 			break
@@ -39,7 +62,6 @@ def compute_similarity_score(student1, student2):
 			else:
 				meeting_time_diff_penalty = min(meeting_time_diff_penalty, abs(time1 - time2) * 0.1)
 	score = score - meeting_time_diff_penalty
-	score = score - (student1.meeting_freq -student2.meeting_freq)*.1
 	return score
 
 
@@ -68,7 +90,7 @@ def get_current_score(matches,scores):
 		overall_score +=score	
 	return overall_score
 
-def assign_last_student(matches,scores,last_student):
+def assign_last_student(matches,last_student):
 	best_score = 0 
 	index = 0 
 	index_of_assign = 0
@@ -76,7 +98,7 @@ def assign_last_student(matches,scores,last_student):
 		score1 = compute_similarity_score(match[0], last_student)
 		score2 = compute_similarity_score(match[0], last_student)
 		avg_score = (score1 +score2)/2
-		if avg_score > best_score
+		if avg_score > best_score:
 			index_of_assign = index
 			best_score = avg_score
 		index+=1 
@@ -100,7 +122,10 @@ def random_assign(students):
 		all_students.remove(match1)
 		all_students.remove(match2)
 		matches.append([match1,match2])
-	return matches 
+	if len(all_students) == 1:
+		last_student = all_students[0]
+		return matches, last_student
+	return matches, None
 
 def random_change(matches,scores):
 	m1, m2 = random.sample(set(range(len(matches))), 2)
@@ -128,58 +153,87 @@ def random_change(matches,scores):
 
 def main():
 	## import data 
-	student_data = pd.read_csv('Accountability Buddy Matching Survey_January 12, 2021_21.06 - edited.csv')
+	student_data = pd.read_csv('Accountability Partner Program - Graduate Matching Survey (Fall 2021)_October 11, 2021_13.46.csv')
 	students =  list()
 	student_data.rename(columns=lambda x: x.strip(),inplace=True)
 	## Create list of students to compute compatability scores for each of the students
 
 	## To prevent people from signing up twice
 	## if they sign up twice we take the most up to date version 
-	email_to_student = dict()
+	sunet_to_student = dict()
 	for index, student in student_data.iterrows():
 		name = student[shared.q_full_name].strip()
-		role = student[q_role].strip()
-		work_type = student[shared.q_role].strip()
+		role = student[shared.q_role].strip()
+		work_type = student[shared.q_research_type].strip()
 		work_type = shared.type_of_work[work_type]
 		email =  student[shared.q_email_address].strip()
-		time_zone = student[shared.q_time_zone].strip()
-		time_zone = shared.time_zones[time_zone]
-		meeting_freq = student[shared.q_meeting_freq].strip()
-		meeting_freq = shared.meeting_frequency[meeting_freq]
+		time_zone_str = student[shared.q_time_zone].strip()
+		time_zone = shared.time_zones[time_zone_str]
+
+		outside_partner = student[shared.q_outside_preference].strip()
+
+		meeting_freq_str = student[shared.q_meeting_freq].strip()
+		meeting_freq = int(student[shared.q_meeting_freq].strip().split(' ')[0])
+		meeting_types_of_work_str = str(student[shared.q_types_of_work_grad])
+		if meeting_types_of_work_str != 'nan':
+			meeting_work_type = list(meeting_types_of_work_str.split(','))
+		else:
+			meeting_types_of_work_str = []
+
+		meeting_type_str = student[shared.q_meeting_type].strip()
+		meeting_type = shared.meeting_type[meeting_type_str]
+
+		partner_type_str = student[shared.q_partner_type].strip()
+		partner_type = shared.partner_type[partner_type_str]
+
+		meeting_times_str = student[shared.q_meeting_times].strip()
 		meeting_times = student[shared.q_meeting_times].strip().split(',')
 		meeting_times = list(map(lambda mt: shared.meeting_times[mt], meeting_times))
-		major = student[shared.program].strip()
-		newStudent = shared.GradStudent(name = name, year =year, email = email,
+		sunet = student[shared.q_sunet].strip()
+		phone = str(student[shared.q_phone]).strip()
+		if phone =='nan':
+			phone = 'Not Provided'
+		major = student[shared.q_program].strip()
+		newStudent = shared.GradStudent(name = name, email = email,
 			role = role,
 			work_type = work_type,
 			time_zone = time_zone,
+			time_zone_str = time_zone_str, 
+			meeting_freq_str = meeting_freq_str,
+			outside_partner = outside_partner,
+			partner_type = partner_type,
+			meeting_type = meeting_type,
+			partner_type_str =partner_type_str,
+			meeting_work_type = meeting_work_type,
 			meeting_freq = meeting_freq,
 			meeting_times = meeting_times,
-			major = major)
-		email_to_student[email] = newStudent
+			meeting_times_str = meeting_times_str,
+			major = major,
+			phone =phone)
+		sunet_to_student[sunet] = newStudent
 	best_score = float('inf') 
-	students = list(email_to_student.values())
+	students = list(sunet_to_student.values())
 	
 	## FIRST ROUND
 	compatability_scores = calculate_all_scores(students)
-	matches = random_assign(students )
+	matches,last_student = random_assign(students )
 	current_score = get_current_score(matches,compatability_scores)
-	num_rounds = 100 
+	num_rounds = 200 
 	num_students = len(students)
 	for i in range(num_rounds):
 		for j in range(len(students)):
-			matches, last_student = random_assign(students )
+			matches = random_change(matches, compatability_scores)
 		current_score = get_current_score(matches, compatability_scores)
 	print('Current overall_score: ' + str(current_score))
 
 	## NEXT ROUNDS 
-	num_initialize = 1000
+	num_initialize = 200
 	best_matches = matches
 	best_score = current_score
 	for i in range(num_initialize):
 		matches, last_student = random_assign(students )
 		current_score = get_current_score(matches,compatability_scores)
-		num_rounds = 100 
+		num_rounds = 200 
 		num_students = len(students)
 		for i in range(num_rounds):
 			for j in range(len(students)):
@@ -188,18 +242,57 @@ def main():
 		if current_score > best_score:
 			best_matches = matches
 			best_score = current_score
-		print('Current best: ' + str(best_score))
-	
-	filename = "graduate-matches.csv"
-	fields = ['Student 1', 'Student 2','Student 3', 'Student 1 Email', 'Student 2 Email','Student 3 Email']
-	index_of_assign = assign_last_student(matches,scores,last_student)
-	matches[index_of_assign].append(last_student)
+		if i %100 == 0:
+			print('Current best: ' + str(best_score))
+	print('Current best: ' + str(best_score))	
+	filename = "graduate-matches3.csv"
+	fields = ['Student 1', 'Student 2','Student 3', 'Student 1 Email', 'Student 2 Email','Student 3 Email',
+	'Student Work Type 1', 'Student Work Type 2', 'Student Work Type 3',
+	'Student Major 1', 'Student Major 2', 'Student Major 3',
+	'Student 1 Time Zone','Student 2 Time Zone', 'Student 3 Time Zone',
+	'Student 1 Meeting Frequency','Student 2 Meeting Frequency', 'Student 3 Meeting Frequency',
+	'Student 1 Buddy Type','Student 2 Buddy Type', 'Student 3 Buddy Type',
+	'Student 1 Type of Work','Student 2 Type of Work', 'Student 3 Type of Work',
+	'Student 1 Meeting Times','Student 2 Meeting Times', 'Student 3 Meeting Times',
+	'Student 1 Phone', 'Student 2 Phone','Student 3 Phone',
+	'Student 1 Preferred Meeting Type', 'Student 2 Preferred Meeting Type','Student 3 Preferred Meeting Type',]
+
+
+	if last_student is not None:
+		print(last_student)
+		index_of_assign = assign_last_student(matches,last_student)
+		matches[index_of_assign].append(last_student)
 	write_matches = []
+	inv_map = {v: k for k, v in shared.time_zones.items()}
+	inv_map_work = {v: k for k, v in shared.type_of_work.items()}
+	inv_map_meeting_type = {v: k for k, v in shared.meeting_type.items()}
 	for match in matches:
 		if len(match) == 2:
-			write_matches.append([match[0].name,match[1].name,' ' ,match[0].email,match[1].email, ' '])
+			write_matches.append([match[0].name,match[1].name,' ' ,
+				match[0].email,match[1].email, ' ',
+				inv_map_work[match[0].work_type],inv_map_work[match[1].work_type],' ',
+				match[0].major,match[1].major, ' ',
+				inv_map[match[0].time_zone],inv_map[match[1].time_zone], ' ',
+				match[0].meeting_freq_str,match[1].meeting_freq_str, ' ',
+				match[0].partner_type_str,match[1].partner_type_str, ' ',
+				', '.join(match[0].meeting_work_type),', '.join(match[1].meeting_work_type), ' ',
+				match[0].meeting_times_str,match[1].meeting_times_str, ' ',
+				match[0].phone,match[1].phone, ' ',
+				inv_map_meeting_type[match[0].meeting_type],inv_map_meeting_type[match[1].meeting_type], ' ',
+				])
 		else:
-			write_matches.append([match[0].name,match[1].name,match[2].name ,match[0].email,match[1].email, match[2].email])
+			write_matches.append([match[0].name,match[1].name,match[2].name ,
+				match[0].email,match[1].email, match[2].email,
+				inv_map_work[match[0].work_type],inv_map_work[match[1].work_type], inv_map_work[match[2].work_type],
+				match[0].major,match[1].major, match[2].major,
+				inv_map[match[0].time_zone],inv_map[match[1].time_zone], inv_map[match[2].time_zone],
+				match[0].meeting_freq_str,match[1].meeting_freq_str, match[2].meeting_freq_str,
+				match[0].partner_type_str,match[1].partner_type_str, match[2].partner_type_str,
+				', '.join(match[0].meeting_work_type),', '.join(match[1].meeting_work_type), ', '.join(match[2].meeting_work_type),
+				match[0].meeting_times_str,match[1].meeting_times_str, match[2].meeting_times_str,
+				match[0].phone,match[1].phone, match[2].phone,
+				inv_map_meeting_type[match[0].meeting_type],inv_map_meeting_type[match[1].meeting_type], inv_map_meeting_type[match[2].meeting_type],
+				])
 
 	with open(filename, 'w') as csvfile:  
 	    # creating a csv writer object  
